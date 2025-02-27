@@ -6,7 +6,6 @@ from openai import OpenAI, OpenAIError
 import jsonschema
 from jsonschema import validate
 import json
-from langdetect import detect, LangDetectException
 import re
 
 # Initialize Flask app and Flask-CORS
@@ -19,57 +18,6 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 openai_api_key = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=openai_api_key)
 
-def detect_language(text):
-    try:
-        detected_lang = detect(text)
-        return detected_lang == 'or'
-    except LangDetectException as e:
-        print(f"Language detection error: {e}")
-        return True  # Return True instead of False to ignore errors
-
-def sanitize_article_text(text):
-    """
-    Sanitizes the article text by removing HTML tags, embedded scripts, 
-    and other code-like structures while preserving numbers and special characters.
-    """
-    # Remove HTML tags
-    text = re.sub(r'<[^>]+>', '', text)
-    
-    # Remove script tags and content between them
-    text = re.sub(r'<script[^>]*>.*?</script>', '', text, flags=re.DOTALL)
-    
-    # Remove style tags and content between them
-    text = re.sub(r'<style[^>]*>.*?</style>', '', text, flags=re.DOTALL)
-    
-    # Remove any inline CSS or JavaScript
-    text = re.sub(r'style="[^"]*"', '', text)
-    text = re.sub(r'on\w+="[^"]*"', '', text)
-    
-    # Remove any remaining code-like structures (e.g., embedded code)
-    text = re.sub(r'`[^`]+`', '', text)  # Inline code wrapped with backticks
-    text = re.sub(r'{[^}]+}', '', text)  # Curly braces code-like structures
-    
-    # Strip any remaining unwanted characters (except numbers and special characters)
-    text = re.sub(r'[^\w\s.,:;\'\"!?()@#$%^&*+-/]', '', text)
-    
-    return text
-
-
-"""
-# JSON Schema definition
-schema = {
-    "type": "object",
-    "properties": {
-        "article_summary": {"type": "string"},
-        "five_key_points": {"type": "array", "items": {"type": "string"}},
-        "headline": {"type": "string"},
-        "meta_description": {"type": "string"},
-        "meta_title": {"type": "string"},
-        "semantic_meta_keywords": {"type": "array", "items": {"type": "string"}}
-    },
-    "required": ["article_summary", "five_key_points", "headline", "meta_description", "meta_title", "semantic_meta_keywords"]
-}
-"""
 
 def fix_json_response(latest_response):
     # Implement your logic to fix JSON response here
@@ -200,16 +148,6 @@ def metadata_odia(request):
             print(f"Focus keyword is available: {focus_keyword}")
         else:
             print("Focus keyword is not available in the request.")
-
-        # Detect the language and validate the input
-        # if not detect_language(article_text):
-            #return jsonify({"error": "Input is not in Odia"}), 400
-
-        # Sanitize the article text to remove embedded code
-        #sanitized_article_text = sanitize_article_text(article_text)
-        #print(f"sanitized article text {sanitized_article_text}")
-
-
 
         assistant_id = "asst_atTgMWrNdNOz2TvTC5mZQCTd"
         my_assistant = client.beta.assistants.retrieve(assistant_id)
